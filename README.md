@@ -4,6 +4,7 @@ This is a video scrapper for animego.
 ## How to use
 
 ```bash
-> rye sync
-> rye run start
+> git clone https://github.com/Sanceilaks/animego-video-extractor-py.git
+> cd animego-video-extractor-py
+> python3 -m src.animego
 ```

@@ -84,9 +84,39 @@ async def parse_seria_info(seria_info) -> dict:
 
     return info
 
+async def pick_anime(name: str) -> str:
+    base_url = f"https://animego.org/search/anime?q={name}"
+
+    animes = []
+
+    async with aiohttp.ClientSession() as session:
+        async with session.get(base_url) as response:
+            soup = bs4.BeautifulSoup(await response.text(), "html.parser")
+            for tag in soup.select(".animes-grid-item"):
+
+                name_tag = tag.select_one(".animes-grid-item-body > .card-title > a")
+                if name_tag is None:
+                    continue
+                name = name_tag.get_text()
+                url_tag = tag.select_one(".animes-grid-item-picture > a")
+                if url_tag is None:
+                    continue
+                url = url_tag.attrs.get("href")
+
+                animes.append({"name": name, "url": url})
+                  
+    choise =  inquirer.prompt([inquirer.List("anime", message="Anime", choices=[x["name"] for x in animes])])["anime"] # type: ignore
+
+    return animes[[x["name"] for x in animes].index(choise)]["url"]
 
 async def async_main() -> None:
-    url = inquirer.prompt([inquirer.Text("url", message="URL")])["url"]  # type: ignore
+    url = inquirer.prompt([inquirer.Text("url", message="URL or name")])["url"]  # type: ignore
+    
+    if not url.startswith("https://"):
+        url = await pick_anime(url)
+
+    if not url.startswith("https://"):
+        raise ValueError("Invalid URL")
 
     host = url.split("/")[2]
     anime_id = url.split("-")[-1]
